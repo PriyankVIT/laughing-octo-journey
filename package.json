@@ -1,0 +1,26 @@
+{
+  "name": "laughing-octo-journey",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DiptoChakrabarty/laughing-octo-journey.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DiptoChakrabarty/laughing-octo-journey/issues"
+  },
+  "homepage": "https://github.com/DiptoChakrabarty/laughing-octo-journey#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "indico.io": "^0.10.6",
+    "node-fetch": "^2.6.0"
+  }
+}
