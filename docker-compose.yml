@@ -1,0 +1,8 @@
+version: "3"
+services:
+     jams:
+        container_name: jams
+        restart: always
+        image: jamsv3
+        ports:
+             - 3005:3000
