@@ -1,42 +1,53 @@
-var indico = require('indico.io');
-var express = require('express')
-var app = express();
-var fetch = require('node-fetch')
-var bodyParser  = require('body-parser')
-
-
+var indico      = require('indico.io'),
+    express     = require('express'),
+    app         = express(),
+    fetch       = require('node-fetch'),
+    bodyParser  = require('body-parser'),
+    textract    = require('textract'),
+    multer      = require('multer')
+    upload      = multer({ dest: 'uploads/' }),
+    fs= require('fs'),
+    pdf = require('pdf-parse')
 require('dotenv').config();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-/**
- * method: POST
- * 
- * request
- * {
- *  text: terms and condition text: (string),
- *  keyword: list of keywords: (array),
- *  minval: threshold of relevence: (float) 
- * }
- * 
- * respose
- * {
- *  success: (boolean),
- *  summary: (array of string)
- * }
- */
+
+const publicDir = require('path').join(__dirname,'/');
+app.use(express.static(publicDir))
+
+let s;
+
+app.post('/fileUpload',upload.single('text'),(req,res)=>{
+    console.log(req.file.path)
+
+    let dataBuffer = fs.readFileSync(req.file.path);
+    pdf(dataBuffer)
+        .then(function(data) {
+            console.log(data.text); 
+            s = data.text;
+            s.replace(/\r?\n|\r/g, ' ')
+            res.json({success: true})
+        })
+        .catch((err)=>{
+            console.log(err);
+            res.json({success: false})
+        })
+})
 
 app.post('/',(req,res) =>{
-    let s = req.body.text;
-    
+    console.log(req.body)
+       
     let a = s.split(/[.!?]/)
     let sentenceList = new Array()
     
-    a.forEach((i)=>{            // removing empty strings
-        if(i.length>0)
+    a.forEach((i)=>{
+        i=i.trim()                  // removing empty strings
+        if(i.length>5)
             sentenceList.push(i)
     })
-    console.log(req.body.keyword)
+
+    console.log(sentenceList)
     fetch('https://apiv2.indico.io/relevance/batch', {
         method: 'POST',
         body: JSON.stringify({
@@ -45,8 +56,8 @@ app.post('/',(req,res) =>{
             queries: req.body.keyword
         })
     })
-    .then(r => r.json())
-    .then(response => {
+    .then((r) => r.json())
+    .then((response) => {
         response = response.results;
         let relevanceData = new Array();
         let minval = req.body.minval;
@@ -55,13 +66,24 @@ app.post('/',(req,res) =>{
             sen.forEach((i)=>{
                 rel+=i;
             })
-                       
-            if(rel>minval){
-                relevanceData.push(sentenceList[index])
-            }
+            relevanceData.push(rel)
         })
-        
-        res.json({success: true, summary: relevanceData})
+
+        let threshhold = Math.max(...relevanceData)*minval;
+
+        let data = new Array();
+        relevanceData.forEach((i,index)=>{
+            if(i>threshhold){
+            
+                let temp=sentenceList[index].slice(sentenceList[index].lenth-3)
+                if(temp=='\n')
+                    sentenceList[index]=sentenceList[index].slice(0,sentenceList[index].lenth-3)
+                data.push(sentenceList[index]);
+            }
+                
+        })
+        console.log(data)
+        res.json({success: true, summary: data})
     })
     .catch(err => {
         console.log(err)
@@ -69,4 +91,7 @@ app.post('/',(req,res) =>{
     });
 })
 
-app.listen(3500,()=>console.log("connected to port ",3500))
+
+app.listen(3000,()=>{
+    console.log("connected to port ",3000);
+})
