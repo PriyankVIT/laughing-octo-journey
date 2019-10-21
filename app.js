@@ -9,7 +9,7 @@ var indico      = require('indico.io'),
     fs= require('fs'),
     pdf = require('pdf-parse')
 require('dotenv').config();
-
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
